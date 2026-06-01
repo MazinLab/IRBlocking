@@ -1,0 +1,648 @@
+/* Herriott Cell Calculator — LCARS "Starfleet science console" styling, matched to the
+   Mazin Lab main site (Okuda-era TNG bridge computer). True-black field, #ff9900 orange chrome,
+   Antonio condensed display caps, Barlow body, JetBrains Mono for all numeric/UI data, asymmetric
+   "elbow" radii, segmented tri-colour bars, CRT scanline overlay. The spot-pattern figure is the
+   viewscreen hero. No frameworks; fonts via the same Google import the main site uses. */
+
+@import url('https://fonts.googleapis.com/css2?family=Antonio:wght@400;500;600;700&family=Barlow+Semi+Condensed:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root {
+  /* structure */
+  --bg:          #000000;   /* page field — true black */
+  --bg-2:        #05060a;   /* viewscreen / input wells */
+  --panel:       #0a0c12;   /* raised console panels (sections, figures) */
+  --panel-2:     #0d0f17;   /* recessed / zebra / table headers */
+  --field:       #111520;   /* deepest wells (inputs) */
+
+  /* text */
+  --ink:         #e8ebf2;   /* primary readout text */
+  --ink-soft:    #8890a3;   /* secondary / captions */
+  --ink-dim:     #4d5366;   /* very dim */
+  --heading:     #ffffff;
+
+  /* LCARS Okudagram palette */
+  --orange:      #ff9900;   /* PRIMARY chrome */
+  --gold:        #ffcc66;   /* secondary warm: labels, links, values */
+  --salmon:      #ff9966;   /* tertiary warm */
+  --peach:       #ffcc99;   /* pale warm fill */
+  --lilac:       #cc99cc;   /* cool accent */
+  --violet:      #9966cc;
+  --blue:        #9999cc;   /* ops accent */
+  --red:         #cc6666;   /* alert / exit */
+
+  /* lines + glows (no drop shadows — colored glows only) */
+  --border:        #1a1e2a;
+  --border-lcars:  rgba(255, 153, 0, 0.28);
+  --border-strong: rgba(255, 153, 0, 0.55);
+  --glow:          0 0 22px rgba(255, 153, 0, 0.20);
+  --glow-strong:   0 0 26px rgba(255, 153, 0, 0.42);
+
+  --radius:       4px;
+  --radius-elbow: 4px 4px 18px 4px;   /* console-panel bottom-right bulge */
+  --radius-pill:  4px 26px 26px 4px;  /* interactive elbow (squared left / round right) */
+  --gap:          1.05rem;
+
+  --display: 'Antonio', 'Barlow Condensed', Impact, system-ui, sans-serif;
+  --body:    'Barlow Semi Condensed', system-ui, -apple-system, sans-serif;
+  --mono:    'JetBrains Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+
+  /* reusable LCARS segmented bar (orange | gap | gold | gap | salmon) */
+  --segbar: linear-gradient(90deg,
+      var(--orange) 0 8%, transparent 8% 10%,
+      var(--gold) 10% 32%, transparent 32% 34%,
+      var(--salmon) 34% 64%, transparent 64% 66%,
+      var(--lilac) 66% 100%);
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; font-size: 16px; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 1rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* CRT scanline overlay (matches main site body::before) */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg, rgba(255, 153, 0, 0.02) 0px, rgba(255, 153, 0, 0.02) 1px,
+    transparent 1px, transparent 3px);
+  mix-blend-mode: screen;
+  opacity: 0.5;
+}
+
+::selection { background: var(--orange); color: #000; }
+
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb { background: var(--orange); border: 3px solid #000; border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+/* ---- Header / masthead -------------------------------------------------- */
+
+header {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 1.8rem 1.5rem 0;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  margin: 0 0 0.7rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.eyebrow::before {
+  content: "";
+  width: 1.6em;
+  height: 0.6em;
+  background: var(--orange);
+  border-radius: 2px 8px 8px 2px;
+  flex: none;
+}
+
+header h1 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(1.7rem, 3.6vw, 2.9rem);
+  font-weight: 600;
+  line-height: 0.98;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--heading);
+}
+
+/* pulsing status dot before the title (LCARS bridge indicator) */
+header h1::before {
+  content: "";
+  display: inline-block;
+  width: 0.46em;
+  height: 0.46em;
+  margin-right: 0.5em;
+  border-radius: 50%;
+  background: var(--orange);
+  box-shadow: 0 0 8px var(--orange);
+  vertical-align: 0.1em;
+  animation: lcarsPulse 2.2s ease-in-out infinite;
+}
+@keyframes lcarsPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+header .sub {
+  margin: 0.7rem 0 1.1rem;
+  font-family: var(--body);
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+/* segmented tri-colour bar closing the masthead */
+.masthead-bar {
+  max-width: 1180px;
+  margin: 0 auto;
+  height: 5px;
+  background: var(--segbar);
+  border-radius: 2px 10px 10px 2px;
+}
+
+/* ---- Two-column instrument layout -------------------------------------- */
+
+main {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem 3.5rem;
+  display: grid;
+  grid-template-columns: minmax(330px, 0.82fr) 1.18fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+section {
+  position: relative;
+  background: var(--panel);
+  border: 1.5px solid var(--border-lcars);
+  border-radius: var(--radius-elbow);
+  overflow: hidden;
+}
+
+/* left-edge LCARS colour bar on each console panel */
+section::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  width: 6px; height: 100%;
+  background: var(--orange);
+}
+#results::after { background: var(--gold); }
+
+/* --- IR Blocking calculator: panel left-bar colors --- */
+#bench::after { background: var(--orange); }
+
+#inputs  { padding: 1.2rem 1.25rem 1.4rem 1.5rem; }
+#bench   { padding: 1.2rem 1.25rem 1.5rem 1.5rem; min-width: 0; }
+#results { padding: 1.2rem 1.25rem 1.5rem 1.5rem; min-width: 0; }
+
+/* Comb + transmission plots live under the inputs to use the left column's height. */
+.plotopt { margin-top: 1rem; }
+.plots {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.9rem;
+  margin-top: 0.7rem;
+}
+.plots canvas { width: 100%; }
+
+/* Labelled section headers ("console panel" eyebrows) */
+#inputs::before,
+#results::before {
+  content: "Inputs ▸ Requirements";
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  margin: 0 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--orange);
+}
+#results::before { content: "Solution ▸ Geometry"; color: var(--gold); }
+
+/* ---- Form controls ------------------------------------------------------ */
+
+.row, .grid { display: grid; gap: 0.75rem 0.9rem; }
+.row  { grid-template-columns: 1fr 1fr; margin-bottom: 0.9rem; }
+.grid { grid-template-columns: 1fr 1fr; }
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-family: var(--display);
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+input, select {
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--field);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--orange);
+  box-shadow: 0 0 0 1px var(--orange), var(--glow);
+}
+
+select {
+  appearance: none;
+  cursor: pointer;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--orange) 50%),
+    linear-gradient(135deg, var(--orange) 50%, transparent 50%);
+  background-position: right 0.9rem center, right 0.65rem center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 1.7rem;
+}
+
+input[type="number"] { font-variant-numeric: tabular-nums; }
+
+/* Outer-ring override sub-panel */
+#ringCtl {
+  margin: 0;
+  padding: 0.7rem 0.85rem 0.85rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel-2);
+}
+#ringCtl legend {
+  padding: 0 0.45rem;
+  font-family: var(--mono);
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--salmon);
+}
+#ringCtl .grid { gap: 0.55rem 0.9rem; }
+
+label.check {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--ink-soft);
+}
+label.check input { width: auto; accent-color: var(--orange); }
+
+#ringCtl input:disabled,
+label.check input:disabled { opacity: 0.4; cursor: not-allowed; }
+
+button#solve {
+  width: 100%;
+  margin-top: 1.15rem;
+  padding: 0.75rem 1.4rem 0.75rem 1.1rem;
+  border: 1.5px solid var(--orange);
+  border-radius: var(--radius-pill);
+  background: var(--orange);
+  color: #000;
+  font-family: var(--display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.2s ease, transform 0.05s ease;
+}
+button#solve:hover { background: var(--gold); border-color: var(--gold); box-shadow: var(--glow-strong); }
+button#solve:active { transform: translateY(1px); }
+button#solve:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--gold), var(--glow-strong); }
+
+.binding {
+  display: flex;
+  align-items: center;
+  gap: 0.55em;
+  margin: 1rem 0 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border-lcars);
+  border-left: 4px solid var(--orange);
+  background: var(--panel-2);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  color: var(--gold);
+  min-height: 1.2em;
+}
+.binding::before {
+  content: "";
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--orange);
+  box-shadow: 0 0 6px var(--orange);
+  flex: none;
+  animation: lcarsPulse 2.2s ease-in-out infinite;
+}
+.binding:empty { display: none; }
+
+/* ---- Figures: spot pattern is the viewscreen hero ---------------------- */
+
+.figs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+}
+
+figure {
+  margin: 0;
+  padding: 0.6rem 0.6rem 0.45rem;
+  background: var(--panel-2);
+  border: 1.5px solid var(--border-lcars);
+  border-radius: 4px 4px 14px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+figcaption {
+  margin-top: 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+canvas, #schematic svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+}
+
+/* Promote the spot-pattern figure to viewscreen hero: wider, orange frame + glow. */
+.figs:first-of-type { grid-template-columns: 1.25fr 1fr; }
+.figs:first-of-type figure:first-child {
+  border-color: var(--border-strong);
+  box-shadow: var(--glow);
+  background: var(--panel);
+}
+.figs:first-of-type figure:first-child canvas { width: 100%; }
+
+#schematic { display: flex; justify-content: center; }
+
+/* ---- Parameter readout table ------------------------------------------- */
+
+table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+
+#params {
+  margin-top: 0.4rem;
+  border: 1.5px solid var(--border-lcars);
+  border-left: 4px solid var(--orange);
+  border-radius: 4px 4px 12px 4px;
+  overflow: hidden;
+}
+
+#params th, #params td {
+  padding: 0.45rem 0.75rem;
+  text-align: left;
+  vertical-align: baseline;
+  border-bottom: 1px solid var(--border);
+}
+#params tr:last-child th, #params tr:last-child td { border-bottom: none; }
+
+#params th {
+  width: 60%;
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 0.92rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+#params td {
+  font-family: var(--mono);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold);
+  text-align: right;
+}
+
+#params tr:nth-child(even) { background: var(--panel-2); }
+#params tr:hover td, #params tr:hover th { background: rgba(255, 153, 0, 0.06); }
+
+/* ---- Alternatives table ------------------------------------------------- */
+
+#results h3 {
+  margin: 1.7rem 0 0.65rem;
+  padding-bottom: 0.6rem;
+  font-family: var(--display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--orange);
+  border-bottom: none;
+  position: relative;
+}
+#results h3::after {
+  content: "";
+  position: absolute;
+  left: 0; bottom: 0;
+  width: 100%; height: 4px;
+  background: var(--segbar);
+  border-radius: 2px 8px 8px 2px;
+}
+
+#alts {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+#alts thead th {
+  padding: 0.42rem 0.5rem;
+  text-align: right;
+  font-weight: 600;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--orange);
+  background: var(--panel-2);
+  border-bottom: 2px solid var(--border-lcars);
+  white-space: nowrap;
+}
+#alts thead th:first-child { text-align: left; }
+
+#alts tbody td {
+  padding: 0.42rem 0.5rem;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  color: var(--ink);
+}
+#alts tbody td:first-child { text-align: left; color: var(--ink-soft); font-weight: 600; }
+
+#alts tbody tr { cursor: pointer; transition: background 0.12s ease; }
+#alts tbody tr:hover td { background: rgba(255, 153, 0, 0.07); }
+#alts tbody tr.selected td { background: rgba(255, 153, 0, 0.12); color: var(--gold); }
+#alts tbody tr.selected td:first-child {
+  color: var(--orange);
+  box-shadow: inset 4px 0 0 var(--orange);
+}
+
+/* ---- Responsive collapse ----------------------------------------------- */
+
+@media (max-width: 860px) {
+  main { grid-template-columns: 1fr; gap: 1.1rem; }
+  #inputs { position: relative; }
+}
+
+@media (max-width: 560px) {
+  body { font-size: 15px; }
+  .row, .grid, .figs, .figs:first-of-type { grid-template-columns: 1fr; }
+  header, main { padding-left: 1rem; padding-right: 1rem; }
+  #alts { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* =========================================================================
+   IR Blocking calculator — layout-specific additions
+   ========================================================================= */
+
+/* Full-width single column so #bench (schematic + 6 columns) and #results stack
+   vertically, overriding the inherited two-column instrument grid. */
+main { grid-template-columns: 1fr; max-width: 1280px; }
+
+/* Column 1 stacks the 300 K source panel with the import-curve panel beneath it */
+.bench-stack { display: flex; flex-direction: column; gap: 0.75rem; }
+
+/* Results dimmed while inputs are invalid (stale — not tied to the current inputs) */
+#results.stale { opacity: 0.4; }
+
+/* Custom-coating: synthesize button + editable multilayer list */
+.synth-btn {
+  width: 100%; margin-top: 0.45rem; padding: 0.38rem;
+  font-family: var(--mono, monospace); font-size: 0.66rem;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  background: var(--panel-2); color: var(--gold);
+  border: 1px solid var(--border-lcars); border-radius: 4px; cursor: pointer;
+}
+.synth-btn:hover { border-color: var(--orange); color: var(--orange); }
+.synth-btn:disabled { opacity: 0.6; cursor: default; }
+.layer-list {
+  max-height: 190px; overflow-y: auto; margin-top: 0.4rem;
+  border: 1px solid var(--border); border-radius: 4px; padding: 0.3rem;
+}
+.layer-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 0.25rem; margin-bottom: 0.22rem; }
+.layer-row select, .layer-row input { padding: 0.2rem 0.25rem; font-size: 0.66rem; }
+.layer-rm {
+  background: transparent; color: var(--red); border: 1px solid var(--border);
+  border-radius: 4px; cursor: pointer; font-size: 0.85rem; line-height: 1; padding: 0 0.4rem;
+}
+.layer-rm:hover { border-color: var(--red); }
+
+/* File input: theme the native "Choose File" button to match the LCARS controls */
+.bench-col input[type="file"] { padding: 0.3rem 0.35rem; font-size: 0.7rem; color: var(--ink-soft); }
+.bench-col input[type="file"]::file-selector-button,
+.bench-col input[type="file"]::-webkit-file-upload-button {
+  font-family: var(--mono, monospace);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--panel-2);
+  color: var(--gold);
+  border: 1px solid var(--border-lcars);
+  border-radius: 4px;
+  padding: 0.28rem 0.55rem;
+  margin-right: 0.5rem;
+  cursor: pointer;
+}
+.bench-col input[type="file"]::file-selector-button:hover,
+.bench-col input[type="file"]::-webkit-file-upload-button:hover {
+  border-color: var(--orange);
+  color: var(--orange);
+}
+
+/* Optical-bench schematic sits above the control columns */
+#schematic {
+  width: 100%;
+  background: var(--bg-2);
+  border: 1px solid var(--border-lcars);
+  border-radius: 4px 4px 14px 4px;
+  margin-bottom: 1rem;
+}
+#schematic svg { display: block; width: 100%; height: auto; }
+
+/* x-aligned control columns: source · stage1 · stage2 · stage3 · pixel · global */
+.bench-columns {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(120px, 1fr));
+  gap: 0.75rem;
+  align-items: start;
+}
+.bench-col {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.5rem 0.6rem;
+}
+.bench-col h4 {
+  font-family: var(--display, "Antonio", sans-serif);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.82rem;
+  color: var(--gold);
+  margin: 0 0 0.4rem;
+}
+.bench-col .field { display: flex; flex-direction: column; margin-bottom: 0.45rem; }
+.bench-col .field label {
+  font-family: var(--mono, "JetBrains Mono", monospace);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 0.15rem;
+}
+.bench-col input, .bench-col select { width: 100%; box-sizing: border-box; padding: 0.32rem 0.4rem; font-size: 0.82rem; }
+
+/* validation error on a field */
+.field.invalid input, .field.invalid select { border-color: var(--red); box-shadow: 0 0 0 1px var(--red); }
+.field .err { color: var(--red); font-family: var(--mono, monospace); font-size: 0.58rem; margin-top: 0.12rem; }
+
+/* curve-coverage badge under a substrate/coating select */
+.coverage { font-family: var(--mono, monospace); font-size: 0.56rem; color: var(--ink-dim); margin-top: 0.1rem; }
+.coverage.warn { color: var(--red); }
+
+/* results: spectrum canvas + big readout */
+#plot { width: 100%; background: var(--bg-2); border: 1px solid var(--border-lcars); border-radius: 4px; }
+.readout { display: flex; align-items: baseline; gap: 0.6rem; margin: 0.8rem 0; }
+.readout .value { font-family: var(--mono, monospace); font-size: 2rem; font-weight: 700; color: var(--orange); text-shadow: var(--glow); }
+.readout .unit { font-family: var(--mono, monospace); color: var(--ink-soft); }
+.legend { display: flex; flex-wrap: wrap; gap: 0.8rem; font-family: var(--mono, monospace); font-size: 0.7rem; color: var(--ink-soft); }
+.legend .swatch { display: inline-block; width: 0.8em; height: 0.8em; margin-right: 0.3em; vertical-align: middle; border-radius: 2px; }
+.notice { font-family: var(--mono, monospace); font-size: 0.65rem; color: var(--gold); margin: 0.4rem 0; }
+
+@media (max-width: 860px) { .bench-columns { grid-template-columns: repeat(2, 1fr); } }

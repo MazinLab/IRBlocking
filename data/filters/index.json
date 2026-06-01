@@ -1,0 +1,37 @@
+[
+  {
+    "file": "n-bk7.json",
+    "name": "N-BK7",
+    "kind": "substrate"
+  },
+  {
+    "file": "darkness.json",
+    "name": "DARKNESS",
+    "kind": "coating"
+  },
+  {
+    "file": "picture-c.json",
+    "name": "PICTURE-C",
+    "kind": "coating"
+  },
+  {
+    "file": "asahi-ysc1100.json",
+    "name": "ASAHI YSC1100",
+    "kind": "coating"
+  },
+  {
+    "file": "asahi-ysc0750.json",
+    "name": "ASAHI YSC0750",
+    "kind": "coating"
+  },
+  {
+    "file": "ito.json",
+    "name": "ITO",
+    "kind": "coating"
+  },
+  {
+    "file": "m254c-cold-mirror.json",
+    "name": "M254C cold mirror",
+    "kind": "mirror"
+  }
+]

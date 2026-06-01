@@ -1,0 +1,11 @@
+{
+  "name": "ir-blocking-calculator",
+  "version": "0.1.0",
+  "description": "Blackbody flux on a detector pixel through cryogenic filter stages (LCARS UI).",
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "serve": "python3 -m http.server 8000"
+  },
+  "license": "BSD-3-Clause"
+}

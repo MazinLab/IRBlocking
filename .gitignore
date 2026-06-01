@@ -1,0 +1,17 @@
+# Dev artifacts and local-only material — keep the repo to the runnable app + README + LICENSE
+node_modules/
+.DS_Store
+*.log
+__pycache__/
+
+# Brainstorm/companion scratch
+.superpowers/
+
+# Design/plan docs and agent instructions (kept locally, not part of the shipped repo)
+docs/
+CLAUDE.md
+AGENTS.md
+
+# Raw reference data and curated source curves (converted output lives in data/filters/)
+Old/
+reference_data/

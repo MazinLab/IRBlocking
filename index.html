@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IR Blocking · Blackbody Flux Calculator</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header>
+    <p class="eyebrow">Mazin Lab · Cryogenic Optics</p>
+    <h1>IR Blocking Calculator</h1>
+    <p class="sub">Blackbody photon flux on a detector pixel through a three-stage cryogenic filter stack.</p>
+  </header>
+  <div class="masthead-bar"></div>
+
+  <main>
+    <section id="bench">
+      <h3>Optical Bench</h3>
+      <div id="schematic"><!-- SVG injected by schematic.js --></div>
+      <div id="bench-columns" class="bench-columns"><!-- control columns injected by main.js --></div>
+    </section>
+
+    <section id="results">
+      <h3>Detected Flux</h3>
+      <div class="readout">
+        <span class="value" id="total">—</span>
+        <span class="unit">counts / sec</span>
+      </div>
+      <div id="notice" class="notice" hidden></div>
+      <canvas id="plot" width="900" height="460"></canvas>
+      <div id="legend" class="legend"></div>
+    </section>
+  </main>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
