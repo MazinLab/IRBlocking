@@ -85,6 +85,12 @@ def main() -> None:
     index.append(_write("PICTURE-C", "coating", wl, t, units_original="percent",
                         source_file="10520C theoretical spectrum.txt"))
 
+    # MEC Prime coating: wl=col0, T%=col1, no header, tab-delimited
+    a = load_csv(OLD / "mec-prime theoretical spectrum 7-30-26.txt", (0, 1), 0, delimiter=None)
+    wl, (t,) = _clean(a[:, 0], [a[:, 1] / 100.0])
+    index.append(_write("MEC Prime", "coating", wl, t, units_original="percent",
+                        source_file="mec-prime theoretical spectrum 7-30-26.txt"))
+
     # ASAHI YSC1100 longpass: wl=col0, T%=col1, 2 header lines, descending
     a = load_csv(OLD / "YSC1100T.csv", (0, 1), 2)
     wl, (t,) = _clean(a[:, 0], [a[:, 1] / 100.0])

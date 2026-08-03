@@ -15,6 +15,11 @@
     "kind": "coating"
   },
   {
+    "file": "mec-prime.json",
+    "name": "MEC Prime",
+    "kind": "coating"
+  },
+  {
     "file": "asahi-ysc1100.json",
     "name": "ASAHI YSC1100",
     "kind": "coating"

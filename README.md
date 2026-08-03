@@ -13,9 +13,9 @@ tool plots **counts/nm vs wavelength** and reports the integrated **counts/sec**
   by the colder downstream filters; cold-stop geometry sets the étendue onto the pixel.
 - **Thickness-scaled substrate materials** computed from first principles: N-BK7, fused silica
   (Suprasil / Infrasil), sapphire, MgF₂, CaF₂.
-- **Coatings** from a measured-curve library (DARKNESS, PICTURE-C, ASAHI YSC1100, ASAHI YSC0750, ITO,
-  M254C cold mirror), plus CSV import and a **Custom coating** (ideal top-hat *or* a designed
-  Ta₂O₅/SiO₂ multilayer).
+- **Coatings** from a measured-curve library (DARKNESS, PICTURE-C, MEC Prime, ASAHI YSC1100,
+  ASAHI YSC0750, ITO, M254C cold mirror), plus CSV import and a **Custom coating** (ideal top-hat
+  *or* a designed Ta₂O₅/SiO₂ multilayer).
 - **Coating designer**: synthesize a real Ta₂O₅/SiO₂ stack from a passband target (transfer-matrix
   forward model + bounded refinement), edit the layer list by hand, and see the designed filter's
   throughput overlaid on the flux plot on a log right-hand axis.
