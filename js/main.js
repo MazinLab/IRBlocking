@@ -216,16 +216,20 @@ function buildCustom2Panel(col) {
 
   const note = document.createElement("div");
   note.className = "coverage";
-  note.textContent = "later rows win · uncovered λ → T = 100%";
+  note.textContent = "later rows win · outside the bands → T = 100%";
   col.appendChild(note);
 
   const hint = document.createElement("div");
   hint.className = "coverage";
-  hint.textContent = "λ start · λ stop / bound · T%";
+  hint.textContent = "λ start · λ stop (bands stay contiguous) / bound · T%";
   col.appendChild(hint);
 
   const list = document.createElement("div");
   list.className = "layer-list spec-list";
+  // Adjacent bands share one boundary, edited from either side. There are no interior gaps: to
+  // leave a region open you define a band for it and set its transmission to 100%, which makes
+  // the intent explicit instead of leaving it to fall through to the uncovered default.
+  const startInputs = [], stopInputs = [];
   rows.forEach((r, idx) => {
     const row = document.createElement("div");
     row.className = "field spec-row"; // .field so showErrors can flag it by data-key
@@ -236,9 +240,20 @@ function buildCustom2Panel(col) {
       inp.type = "number"; inp.value = value; inp.title = title; inp.style.gridArea = area;
       inp.addEventListener("input", () => set(() => { assign(+inp.value); refreshSummary(); }));
       row.appendChild(inp);
+      return inp;
     };
-    num("lo", r.startNm, "λ start (nm)", (v) => (r.startNm = v));
-    num("hi", r.stopNm, "λ stop (nm)", (v) => (r.stopNm = v));
+    // Each edit drags the neighbour sharing that boundary. Partner fields are updated in place —
+    // rebuilding the panel here would steal focus mid-keystroke.
+    startInputs[idx] = num("lo", r.startNm, "λ start (nm)", (v) => {
+      r.startNm = v;
+      const prev = rows[idx - 1];
+      if (prev) { prev.stopNm = v; stopInputs[idx - 1].value = v; }
+    });
+    stopInputs[idx] = num("hi", r.stopNm, "λ stop (nm)", (v) => {
+      r.stopNm = v;
+      const next = rows[idx + 1];
+      if (next) { next.startNm = v; startInputs[idx + 1].value = v; }
+    });
 
     const op = document.createElement("select");
     op.style.gridArea = "op"; op.title = "spec bound";
@@ -257,7 +272,15 @@ function buildCustom2Panel(col) {
     const rm = document.createElement("button");
     rm.className = "layer-rm"; rm.textContent = "×"; rm.title = "remove band";
     rm.style.gridArea = "rm";
-    rm.addEventListener("click", () => { rows.splice(idx, 1); buildColumns(); recompute(); });
+    rm.addEventListener("click", () => {
+      const prev = rows[idx - 1], next = rows[idx + 1];
+      rows.splice(idx, 1);
+      // Close over the removed span rather than leaving a hole that transmits at 100%; an interior
+      // band is absorbed by the one below it. Removing an end band just moves the outer edge in.
+      if (prev && next) prev.stopNm = next.startNm;
+      buildColumns();
+      recompute();
+    });
     row.appendChild(rm);
 
     list.appendChild(row);
@@ -291,7 +314,8 @@ function buildColumns() {
   col1.className = "bench-stack";
   root.appendChild(col1);
 
-  const src = column(col1, "300 K Source");
+  // Not "300 K Source": the temperature is an input, shown in the field below and on the schematic.
+  const src = column(col1, "Source");
   numField(src, "Temperature (K)", state.source.T, (v) => set(() => (state.source.T = +v)), "source_T");
   numField(src, "Aperture D (mm)", state.source.D_mm, (v) => set(() => (state.source.D_mm = +v)), "source_D");
   numField(src, "Distance d (mm)", state.source.d_mm, (v) => set(() => (state.source.d_mm = +v)), "source_d");

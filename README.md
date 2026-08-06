@@ -2,14 +2,15 @@
 
 A static, browser-only [LCARS-themed](https://en.wikipedia.org/wiki/LCARS) calculator for the
 blackbody photon flux landing on a detector pixel through a three-stage cryogenic filter stack.
-A 300 K source radiates through three cold stages (default 65 K / 4 K / 800 mK) onto the pixel; the
+A warm source (default 280 K) radiates through three cold stages (default 65 K / 3.5 K / 800 mK)
+onto the pixel; the
 tool plots **counts/nm vs wavelength** and reports the integrated **counts/sec**.
 
 ## Features
 
 - **Reactive optical-bench schematic** with the controls laid out per stage (temperature, aperture
   diameter, axial distance, substrate + thickness, coating).
-- **Full radiative model**: the 300 K source and each cold stage emit as graybodies, each attenuated
+- **Full radiative model**: the warm source and each cold stage emit as graybodies, each attenuated
   by the colder downstream filters; cold-stop geometry sets the étendue onto the pixel.
 - **Thickness-scaled substrate materials** computed from first principles: N-BK7, fused silica
   (Suprasil / Infrasil), sapphire, MgF₂, CaF₂.
@@ -60,7 +61,10 @@ over a wavelength grid), so the flux engine never cares how an element's curve w
   (`CustomCoating`), a designed multilayer (`MultilayerCoating`), or **Custom 2** (`SpecCoating`) —
   piecewise `Tavg` bounds per band, where each row's stated bound *is* the transmission used (so the
   result is the worst case the spec permits), later rows override earlier ones on overlap, and
-  wavelengths no row covers transmit fully.
+  wavelengths no band covers transmit fully. The editor keeps adjacent bands contiguous — editing
+  either side of a boundary drags its partner, and removing a band closes over its span — so an
+  open region has to be stated as a band at 100% rather than left implicit. Only λ outside the
+  outermost bands falls through to the uncovered default.
 - **Multilayer designer** (`js/tmm.js`, `js/synthesis.js`): a transfer-matrix forward model for
   Ta₂O₅/SiO₂ stacks, plus a synthesizer that builds a chirped long-wave-blocking edge filter from the
   Custom passband and refines the layer thicknesses (asymmetric objective: maximize in-band, suppress

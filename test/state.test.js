@@ -5,7 +5,7 @@ import { defaultState, validate, buildGridNm } from "../js/state.js";
 
 test("defaultState matches the spec defaults", () => {
   const s = defaultState();
-  assert.equal(s.source.T, 300);
+  assert.equal(s.source.T, 280);
   assert.deepEqual(s.stages.map((x) => x.T), [65, 3.5, 0.8]);
   assert.deepEqual(s.stages.map((x) => x.coating), ["ASAHI YSC1100", "ASAHI YSC1100", "(none)"]);
   assert.deepEqual(s.stages.map((x) => x.thickness_mm), [10, 20, 1]);

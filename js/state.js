@@ -5,7 +5,7 @@ export const N_MAX = 20000;
 
 export function defaultState() {
   return {
-    source: { T: 300, D_mm: 50, d_mm: 200 },
+    source: { T: 280, D_mm: 50, d_mm: 200 },
     stages: [
       { name: "Stage 1", T: 65, D_mm: 50, d_mm: 150, substrate: "N-BK7", thickness_mm: 10, coating: "ASAHI YSC1100" },
       { name: "Stage 2", T: 3.5, D_mm: 50, d_mm: 100, substrate: "N-BK7", thickness_mm: 20, coating: "ASAHI YSC1100" },
@@ -19,13 +19,15 @@ export function defaultState() {
     includeStageEmission: true,
     // "Custom" coating: ideal top-hat OR a designed Ta2O5/SiO2 multilayer (TMM)
     custom: { startNm: 950, stopNm: 1450, outPct: 0.1, mode: "ideal", layers: [], synthLayers: 60 },
-    // "Custom 2": vendor-style Tavg bounds per band. Later rows win; uncovered λ transmit fully.
+    // "Custom 2": vendor-style Tavg bounds per band. Later rows win; λ outside the bands transmit
+    // fully. Bands are contiguous — the editor admits no interior gaps, so an open region is stated
+    // as a band at 100% rather than left implicit.
     custom2: {
       rows: [
         { startNm: 950, stopNm: 1400, op: ">=", tPct: 90 },
-        { startNm: 1450, stopNm: 2350, op: "<=", tPct: 0.5 },
-        { startNm: 2350, stopNm: 2800, op: "<=", tPct: 0.1 },
-        { startNm: 2800, stopNm: 3400, op: "<=", tPct: 0.5 },
+        { startNm: 1400, stopNm: 2300, op: "<=", tPct: 0.2 },
+        { startNm: 2300, stopNm: 2800, op: "<=", tPct: 0.1 },
+        { startNm: 2800, stopNm: 3400, op: "<=", tPct: 10 },
       ],
     },
   };

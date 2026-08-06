@@ -61,7 +61,7 @@ export function renderSchematic(container, state) {
     return `
       <rect x="${p.x - 7}" y="${t}" width="14" height="${axisY - topH - t}" rx="3" fill="${p.color}"${sw}/>
       <rect x="${p.x - 7}" y="${axisY + topH}" width="14" height="${b - (axisY + topH)}" rx="3" fill="${p.color}"${sw}/>
-      <text x="${p.x}" y="52" fill="${p.color}" font-size="14" text-anchor="middle" font-weight="700">${p.name || "300 K source"}</text>
+      <text x="${p.x}" y="52" fill="${p.color}" font-size="14" text-anchor="middle" font-weight="700">${p.name || "Source"}</text>
       <text x="${p.x}" y="${H - 50}" fill="${p.color}" font-size="13" text-anchor="middle">${p.label}</text>
       ${isStop ? `<text x="${p.x}" y="${H - 34}" fill="#ff9900" font-size="10" text-anchor="middle">limiting stop</text>` : ""}`;
   };

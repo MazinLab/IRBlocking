@@ -93,14 +93,19 @@ test("SpecCoating drops malformed rows and clamps percentages", () => {
   assert.equal(c.transmission(Float64Array.from([1500]))[0], 1);
 });
 
-test("default Custom 2 rows match the transcribed spec", () => {
+test("default Custom 2 rows match the transcribed spec and leave no gaps", () => {
   const rows = defaultState().custom2.rows;
   assert.deepEqual(rows, [
     { startNm: 950, stopNm: 1400, op: ">=", tPct: 90 },
-    { startNm: 1450, stopNm: 2350, op: "<=", tPct: 0.5 },
-    { startNm: 2350, stopNm: 2800, op: "<=", tPct: 0.1 },
-    { startNm: 2800, stopNm: 3400, op: "<=", tPct: 0.5 },
+    { startNm: 1400, stopNm: 2300, op: "<=", tPct: 0.2 },
+    { startNm: 2300, stopNm: 2800, op: "<=", tPct: 0.1 },
+    { startNm: 2800, stopNm: 3400, op: "<=", tPct: 10 },
   ]);
+  // every adjacent pair shares a boundary, so nothing between 950 and 3400 transmits at 100%
+  for (let i = 1; i < rows.length; i++) assert.equal(rows[i].startNm, rows[i - 1].stopNm);
+  // nothing between 950 and 3400 falls through to the uncovered default of T = 1
+  const t = new SpecCoating(rows).transmission(Float64Array.from([1425, 2360, 2810]));
+  assert.ok(t.every((x) => x < 1), `a default band gap falls through to T = 1: ${[...t]}`);
 });
 
 test("Custom 2 rows are validated only when a stage selects Custom 2", () => {
