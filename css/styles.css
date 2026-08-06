@@ -536,7 +536,7 @@ table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
    vertically, overriding the inherited two-column instrument grid. */
 main { grid-template-columns: 1fr; max-width: 1280px; }
 
-/* Column 1 stacks the 300 K source panel with the import-curve panel beneath it */
+/* Vertical stack inside one grid column (source+spectrum+import, detector+custom coating) */
 .bench-stack { display: flex; flex-direction: column; gap: 0.75rem; }
 
 /* Results dimmed while inputs are invalid (stale — not tied to the current inputs) */
@@ -621,7 +621,7 @@ main { grid-template-columns: 1fr; max-width: 1280px; }
 }
 #schematic svg { display: block; width: 100%; height: auto; }
 
-/* x-aligned control columns: source · stage1 · stage2 · stage3 · pixel · global */
+/* x-aligned control columns: source · stage1 · stage2 · stage3 · detector · custom 2 */
 .bench-columns {
   display: grid;
   grid-template-columns: repeat(6, minmax(120px, 1fr));

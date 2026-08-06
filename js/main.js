@@ -286,7 +286,7 @@ function buildColumns() {
   const subs = ["(none)", ...materialNames()];
   const coats = ["(none)", "Custom", "Custom 2", ...curvesByKind("coating", "mirror")];
 
-  // Column 1: a stack holding the source panel with the import panel tucked beneath it.
+  // Column 1: the source panel, with the spectrum and import panels stacked beneath it.
   const col1 = document.createElement("div");
   col1.className = "bench-stack";
   root.appendChild(col1);
@@ -308,7 +308,7 @@ function buildColumns() {
     coverageTargets.push({ stage: st, prop: "coating", kind: "curve", cov: coatField.querySelector(".coverage") });
   });
 
-  // Detector column stacks the detector panel with the Custom-coating definition beneath it.
+  // Detector column stacks the detector panel with the Custom-coating designer beneath it.
   const detStack = document.createElement("div");
   detStack.className = "bench-stack";
   root.appendChild(detStack);
@@ -319,9 +319,12 @@ function buildColumns() {
 
   const cust = column(detStack, "Custom Coating");
   buildCustomPanel(cust);
-  buildCustom2Panel(column(detStack, "Custom Coating 2"));
 
-  const g = column(root, "Spectrum");
+  // Custom 2 owns the last column: the band editor is the tallest panel on the bench, so stacking
+  // it under another one stretched the whole grid row and left the short columns half empty.
+  buildCustom2Panel(column(root, "Custom Coating 2"));
+
+  const g = column(col1, "Spectrum");
   numField(g, "λ min (nm)", state.lambdaMinNm, (v) => set(() => (state.lambdaMinNm = +v)), "range");
   numField(g, "λ max (nm)", state.lambdaMaxNm, (v) => set(() => (state.lambdaMaxNm = +v)), "range");
   numField(g, "Resolution (nm)", state.resolutionNm, (v) => set(() => (state.resolutionNm = +v)), "resolution");
@@ -331,7 +334,7 @@ function buildColumns() {
   cb.addEventListener("change", () => set(() => (state.includeStageEmission = cb.checked)));
   ef.appendChild(cb); g.appendChild(ef);
 
-  // import control — tucked under the source panel in column 1
+  // import control — bottom of column 1, under the source and spectrum panels
   const imp = column(col1, "Import coating");
   imp.innerHTML += `<div class="field"><label>2-col file</label>
     <input type="file" id="impFile" accept=".csv,.txt"></div>
