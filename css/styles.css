@@ -564,6 +564,31 @@ main { grid-template-columns: 1fr; max-width: 1280px; }
 }
 .layer-rm:hover { border-color: var(--red); }
 
+/* Custom coating 2: the transcribed spec, then one editor row per band */
+.spec-summary {
+  font-family: var(--mono, monospace); font-size: 0.58rem; line-height: 1.55;
+  color: var(--gold); white-space: pre-line;
+  background: var(--bg-2); border: 1px solid var(--border); border-radius: 4px;
+  padding: 0.35rem 0.4rem; margin-bottom: 0.3rem;
+}
+/* Two lines per band so 4-digit wavelengths still fit a ~190px column.
+   .field.spec-row (0,3,0) so the grid beats `.bench-col .field { display:flex }` regardless of
+   source order — the row carries .field only so showErrors can flag it by data-key. */
+.bench-col .field.spec-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  grid-template-areas: "lo hi rm" "op t rm";
+  gap: 0.25rem;
+  margin-bottom: 0.35rem; padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--border);
+}
+.bench-col .field.spec-row:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+.spec-list { max-height: 320px; }
+/* the row-level error message spans the full row, under both lines */
+.spec-row .err { grid-column: 1 / -1; }
+.spec-row input, .spec-row select { padding: 0.2rem 0.25rem; font-size: 0.66rem; }
+.spec-row .layer-rm { align-self: center; }
+
 /* File input: theme the native "Choose File" button to match the LCARS controls */
 .bench-col input[type="file"] { padding: 0.3rem 0.35rem; font-size: 0.7rem; color: var(--ink-soft); }
 .bench-col input[type="file"]::file-selector-button,

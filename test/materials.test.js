@@ -71,6 +71,33 @@ test("transmission stays finite beyond a material's validity range (no NaN past 
   assert.ok(Number.isFinite(at(caf2, caf2.transmission, 12000)), "CaF2 T past range not finite");
 });
 
+test("substrate is opaque outside its validity range, at every thickness", () => {
+  // Regression: holding the measured/tabulated edge value past the absorption edge turned a falling
+  // edge into an infinite transmission plateau. A 1 mm N-BK7 window read T = 0.38 out to 12 µm.
+  const curve = JSON.parse(readFileSync(new URL("../data/filters/n-bk7.json", import.meta.url)));
+  const [, hiNm] = MATERIALS["N-BK7"].rangeNm;
+  for (const d of [1, 10, 20]) {
+    const el = new MaterialElement(MATERIALS["N-BK7"], d, curve);
+    for (const nm of [hiNm + 1, 5000, 8000, 12000]) {
+      assert.equal(at(el, el.transmission, nm), 0, `N-BK7 ${d} mm still transmits at ${nm} nm`);
+    }
+    assert.equal(at(el, el.transmission, 100), 0, "N-BK7 transmits below its UV edge");
+  }
+  // same rule on the alpha-table path
+  const caf2 = new MaterialElement(MATERIALS.CaF2, 1);
+  assert.ok(at(caf2, caf2.transmission, 9090) > 0, "CaF2 opaque inside its range");
+  assert.equal(at(caf2, caf2.transmission, 12000), 0, "CaF2 transmits past its 10600 nm edge");
+});
+
+test("an opaque substrate still emits: eps = 1 - R past the absorption edge", () => {
+  const curve = JSON.parse(readFileSync(new URL("../data/filters/n-bk7.json", import.meta.url)));
+  const el = new MaterialElement(MATERIALS["N-BK7"], 10, curve);
+  const R = at(el, el.reflection, 6000);
+  const eps = 1 - at(el, el.transmission, 6000) - R;
+  assert.ok(Math.abs(eps - (1 - R)) < 1e-12, `expected eps = 1-R = ${1 - R}, got ${eps}`);
+  assert.ok(eps > 0.9, `opaque substrate should be a near-blackbody emitter, got ${eps}`);
+});
+
 test("N-BK7 curve model reproduces the measured 10 mm curve and scales with thickness", () => {
   const curve = JSON.parse(readFileSync(new URL("../data/filters/n-bk7.json", import.meta.url)));
   const mk = (d) => new MaterialElement(MATERIALS["N-BK7"], d, curve);

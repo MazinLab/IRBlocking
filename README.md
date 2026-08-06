@@ -14,8 +14,9 @@ tool plots **counts/nm vs wavelength** and reports the integrated **counts/sec**
 - **Thickness-scaled substrate materials** computed from first principles: N-BK7, fused silica
   (Suprasil / Infrasil), sapphire, MgF₂, CaF₂.
 - **Coatings** from a measured-curve library (DARKNESS, PICTURE-C, MEC Prime, ASAHI YSC1100,
-  ASAHI YSC0750, ITO, M254C cold mirror), plus CSV import and a **Custom coating** (ideal top-hat
-  *or* a designed Ta₂O₅/SiO₂ multilayer).
+  ASAHI YSC0750, ITO, M254C cold mirror), plus CSV import, a **Custom coating** (ideal top-hat
+  *or* a designed Ta₂O₅/SiO₂ multilayer), and **Custom 2** — a vendor spec transcribed as
+  `Tavg ≥/≤ x%` bounds per wavelength band.
 - **Coating designer**: synthesize a real Ta₂O₅/SiO₂ stack from a passband target (transfer-matrix
   forward model + bounded refinement), edit the layer list by hand, and see the designed filter's
   throughput overlaid on the flux plot on a log right-hand axis.
@@ -52,8 +53,14 @@ over a wavelength grid), so the flux engine never cares how an element's curve w
   `T = (1−R)²·τ(λ,d)`, `ε = (1−R)(1−τ)`, with `R` from the Sellmeier refractive index and bulk `τ`
   from either a tabulated absorption coefficient (fused silica, sapphire, MgF₂, CaF₂) or the measured
   N-BK7 curve scaled from its 10 mm reference (Beer–Lambert). Each stage has a Thickness (mm) input.
+  Outside a material's validity range (`rangeNm`, bounded by its UV and multiphonon IR absorption
+  edges) the substrate is **opaque** — `τ = 0`, `ε = 1 − R` — rather than holding the edge value,
+  which would turn a falling absorption edge into an infinite transmission plateau.
 - **Coatings** are measured `T(λ)` curves (`js/filters.js`), the analytic **Custom** top-hat
-  (`CustomCoating`), or a designed multilayer (`MultilayerCoating`).
+  (`CustomCoating`), a designed multilayer (`MultilayerCoating`), or **Custom 2** (`SpecCoating`) —
+  piecewise `Tavg` bounds per band, where each row's stated bound *is* the transmission used (so the
+  result is the worst case the spec permits), later rows override earlier ones on overlap, and
+  wavelengths no row covers transmit fully.
 - **Multilayer designer** (`js/tmm.js`, `js/synthesis.js`): a transfer-matrix forward model for
   Ta₂O₅/SiO₂ stacks, plus a synthesizer that builds a chirped long-wave-blocking edge filter from the
   Custom passband and refines the layer thicknesses (asymmetric objective: maximize in-band, suppress

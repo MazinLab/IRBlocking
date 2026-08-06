@@ -1,12 +1,13 @@
 // js/main.js
 import { defaultState, validate, buildGridNm } from "./state.js";
 import { loadLibrary, parseCurveText } from "./filters.js";
-import { CurveElement, StageElement, CustomCoating } from "./optics.js";
+import { CurveElement, StageElement, CustomCoating, SpecCoating } from "./optics.js";
 import { MATERIALS, MaterialElement, materialNames } from "./materials.js";
 import { MultilayerCoating } from "./tmm.js";
 import { synthesizeStack } from "./synthesis.js";
 
 const CUSTOM_COLOR = "#5fd3bc"; // throughput-overlay color (distinct from total/emitters)
+const CUSTOM2_COLOR = "#c78bff"; // Custom-2 throughput overlay
 import { assembleFlux, integrateTrapezoid, toPerNm, coldStopOmega } from "./physics.js";
 import { renderSchematic, fmtT, tempColor } from "./schematic.js";
 import { drawSpectrum } from "./plot.js";
@@ -36,7 +37,10 @@ function substrateElement(stage) {
   return new MaterialElement(mat, stage.thickness_mm, measured);
 }
 function customMultilayerActive() {
-  return state.custom.mode === "multilayer" && state.custom.layers.length > 0;
+  // Deliberately NOT gated on layers.length: an empty stack is a BARE element (TMM gives T = 1),
+  // which is what the layer list actually describes. Falling back to the ideal top-hat when the
+  // user deletes the last layer would silently report a perfect filter and understate the IR load.
+  return state.custom.mode === "multilayer";
 }
 function coatingElement(stage) {
   if (stage.coating === "Custom") {
@@ -47,6 +51,7 @@ function coatingElement(stage) {
       outFraction: state.custom.outPct / 100,
     });
   }
+  if (stage.coating === "Custom 2") return new SpecCoating(state.custom2.rows);
   return curveElement(stage.coating);
 }
 function stageElement(stage) {
@@ -135,10 +140,15 @@ function buildCustomPanel(cust) {
       // Synthesize against the default ~3.4 µm cutoff (the fused-silica regime, where the substrate
       // absorbs beyond). Extending the block band to a far λmax is left out: a finite stack cannot
       // flatten the passband AND block a multi-octave IR band — doing so collapses the passband.
-      state.custom.layers = synthesizeStack(target, { layers: state.custom.synthLayers });
-      state.custom.mode = "multilayer";
-      buildColumns();
-      recompute();
+      try {
+        state.custom.layers = synthesizeStack(target, { layers: state.custom.synthLayers });
+        state.custom.mode = "multilayer";
+      } catch (err) {
+        alert(err.message); // passband stop at/beyond the substrate cutoff — nothing left to block
+      } finally {
+        buildColumns(); // rebuilds the button, clearing the disabled/"Synthesizing…" state
+        recompute();
+      }
     }, 20);
   });
   cust.appendChild(synthBtn);
@@ -186,12 +196,95 @@ function buildCustomPanel(cust) {
   cust.appendChild(add);
 }
 
+/** One spec row rendered in the vendor notation the rows were transcribed from. */
+function specLine(r) {
+  const op = r.op === ">=" ? "≥" : "≤";
+  return `Tavg${op}${r.tPct}%  ${r.startNm}–${r.stopNm} nm`;
+}
+
+function buildCustom2Panel(col) {
+  const rows = state.custom2.rows;
+
+  const summary = document.createElement("div");
+  summary.className = "spec-summary";
+  const refreshSummary = () => {
+    // Updated in place on every keystroke: rebuilding the panel here would steal input focus.
+    summary.textContent = rows.length ? rows.map(specLine).join("\n") : "(no bands specified)";
+  };
+  refreshSummary();
+  col.appendChild(summary);
+
+  const note = document.createElement("div");
+  note.className = "coverage";
+  note.textContent = "later rows win · uncovered λ → T = 100%";
+  col.appendChild(note);
+
+  const hint = document.createElement("div");
+  hint.className = "coverage";
+  hint.textContent = "λ start · λ stop / bound · T%";
+  col.appendChild(hint);
+
+  const list = document.createElement("div");
+  list.className = "layer-list spec-list";
+  rows.forEach((r, idx) => {
+    const row = document.createElement("div");
+    row.className = "field spec-row"; // .field so showErrors can flag it by data-key
+    row.dataset.key = `custom2_${idx}`;
+
+    const num = (area, value, title, assign) => {
+      const inp = document.createElement("input");
+      inp.type = "number"; inp.value = value; inp.title = title; inp.style.gridArea = area;
+      inp.addEventListener("input", () => set(() => { assign(+inp.value); refreshSummary(); }));
+      row.appendChild(inp);
+    };
+    num("lo", r.startNm, "λ start (nm)", (v) => (r.startNm = v));
+    num("hi", r.stopNm, "λ stop (nm)", (v) => (r.stopNm = v));
+
+    const op = document.createElement("select");
+    op.style.gridArea = "op"; op.title = "spec bound";
+    // Symbols only — the cell is ~56px wide and the summary above already spells out "Tavg≥90%".
+    for (const [val, lab] of [[">=", "≥"], ["<=", "≤"]]) {
+      const o = document.createElement("option");
+      o.value = val; o.textContent = lab;
+      if (val === r.op) o.selected = true;
+      op.appendChild(o);
+    }
+    op.addEventListener("change", () => set(() => { r.op = op.value; refreshSummary(); }));
+    row.appendChild(op);
+
+    num("t", r.tPct, "transmission (%)", (v) => (r.tPct = v));
+
+    const rm = document.createElement("button");
+    rm.className = "layer-rm"; rm.textContent = "×"; rm.title = "remove band";
+    rm.style.gridArea = "rm";
+    rm.addEventListener("click", () => { rows.splice(idx, 1); buildColumns(); recompute(); });
+    row.appendChild(rm);
+
+    list.appendChild(row);
+  });
+  col.appendChild(list);
+
+  const add = document.createElement("button");
+  add.className = "synth-btn";
+  add.textContent = "+ band";
+  add.addEventListener("click", () => {
+    const last = rows[rows.length - 1];
+    // Continue from where the spec left off rather than dropping in a blank row.
+    rows.push(last
+      ? { startNm: last.stopNm, stopNm: last.stopNm + 500, op: "<=", tPct: 0.5 }
+      : { startNm: 950, stopNm: 1400, op: ">=", tPct: 90 });
+    buildColumns();
+    recompute();
+  });
+  col.appendChild(add);
+}
+
 function buildColumns() {
   const root = el("bench-columns");
   root.innerHTML = "";
   coverageTargets = [];
   const subs = ["(none)", ...materialNames()];
-  const coats = ["(none)", "Custom", ...curvesByKind("coating", "mirror")];
+  const coats = ["(none)", "Custom", "Custom 2", ...curvesByKind("coating", "mirror")];
 
   // Column 1: a stack holding the source panel with the import panel tucked beneath it.
   const col1 = document.createElement("div");
@@ -226,6 +319,7 @@ function buildColumns() {
 
   const cust = column(detStack, "Custom Coating");
   buildCustomPanel(cust);
+  buildCustom2Panel(column(detStack, "Custom Coating 2"));
 
   const g = column(root, "Spectrum");
   numField(g, "λ min (nm)", state.lambdaMinNm, (v) => set(() => (state.lambdaMinNm = +v)), "range");
@@ -344,17 +438,28 @@ function recompute() {
     maximumFractionDigits: 1,
   });
   const notice = el("notice");
-  if (coarsened) { notice.hidden = false; notice.textContent = "Grid coarsened to 20000 points; entered resolution preserved."; }
-  else notice.hidden = true;
+  if (coarsened) {
+    notice.hidden = false;
+    notice.textContent = `Grid capped at ${n} points: resolution coarsened from ${state.resolutionNm} nm `
+      + `to ${(gridNm[1] - gridNm[0]).toPrecision(3)} nm.`;
+  } else notice.hidden = true;
 
   const emitterMeta = [{ label: fmtT(state.source.T) + " source", color: tempColor(state.source.T) }];
   if (state.includeStageEmission) state.stages.forEach((st) => emitterMeta.push({ label: st.name + " " + fmtT(st.T), color: tempColor(st.T) }));
+  // One right-axis overlay slot: the multilayer design preview keeps priority, so Custom 2 is
+  // plotted whenever the Custom coating is not in multilayer mode.
   let overlay = null;
   if (customMultilayerActive()) {
     overlay = {
       values: new MultilayerCoating(state.custom.layers).transmission(gridNm),
       color: CUSTOM_COLOR,
       label: "custom throughput",
+    };
+  } else if (state.stages.some((st) => st.coating === "Custom 2")) {
+    overlay = {
+      values: new SpecCoating(state.custom2.rows).transmission(gridNm),
+      color: CUSTOM2_COLOR,
+      label: "custom 2 throughput",
     };
   }
   drawSpectrum(el("plot"), {
@@ -364,7 +469,7 @@ function recompute() {
   el("legend").innerHTML =
     `<span><span class="swatch" style="background:#ff9900"></span>total</span>` +
     emitterMeta.map((m) => `<span><span class="swatch" style="background:${m.color}"></span>${m.label}</span>`).join("") +
-    (overlay ? `<span><span class="swatch" style="background:${CUSTOM_COLOR}"></span>custom throughput (right axis)</span>` : "");
+    (overlay ? `<span><span class="swatch" style="background:${overlay.color}"></span>${overlay.label} (right axis)</span>` : "");
 
   updateCoverageBadges();
 }

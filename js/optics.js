@@ -124,6 +124,50 @@ export class CustomCoating {
 }
 
 /**
+ * Piecewise coating written as vendor-style average-transmission bounds per band, e.g.
+ *   Tavg >= 90%   950-1400 nm
+ *   Tavg <= 0.5% 1450-2350 nm
+ *
+ * Each row's stated bound IS the transmission used: a ">=" floor gives the least in-band throughput
+ * the spec permits, a "<=" ceiling the most out-of-band leakage it permits. The result is therefore
+ * the worst case the specification allows, not a typical part.
+ *
+ * Rows are applied in order and LATER ROWS WIN — a row further down the list overrides any overlap
+ * with the rows above it. Wavelengths no row covers transmit fully (T = 1): nothing was specified
+ * there, so nothing is claimed to block. Reflection is unknown, so hasReflection is false and the
+ * stage's emissivity falls back to the substrate (see StageElement.reflection).
+ */
+export class SpecCoating {
+  constructor(rows) {
+    // Defensive like MultilayerCoating: a half-typed row must never reach the grid as NaN.
+    this.rows = (rows || [])
+      .filter((r) => Number.isFinite(r.startNm) && Number.isFinite(r.stopNm) &&
+        r.stopNm > r.startNm && Number.isFinite(r.tPct))
+      .map((r) => ({
+        startNm: r.startNm,
+        stopNm: r.stopNm,
+        fraction: r.tPct < 0 ? 0 : r.tPct > 100 ? 1 : r.tPct / 100,
+      }));
+  }
+  transmission(gridNm) {
+    const out = new Float64Array(gridNm.length);
+    out.fill(1); // uncovered wavelengths are unspecified, so fully transmitting
+    for (const r of this.rows) {
+      for (let i = 0; i < gridNm.length; i++) {
+        if (gridNm[i] >= r.startNm && gridNm[i] <= r.stopNm) out[i] = r.fraction;
+      }
+    }
+    return out;
+  }
+  reflection(gridNm) {
+    return new Float64Array(gridNm.length);
+  }
+  get hasReflection() {
+    return false;
+  }
+}
+
+/**
  * Future transfer-matrix element behind the same interface (the v1 hook).
  * Construct with { layers: [{material, thickness_nm}], substrate, angle_deg }.
  * Implement transmission/reflection from n(λ),k(λ) dispersion when the n,k library lands.

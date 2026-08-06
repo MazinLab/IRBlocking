@@ -57,6 +57,19 @@ test("refine never increases the cost relative to the starting design", () => {
   assert.ok(c1 <= c0 + 1e-12, `refined cost ${c1} should be ≤ starting cost ${c0}`);
 });
 
+test("synthesis refuses a passband whose stop reaches the substrate cutoff", () => {
+  // Regression: the block band [stop, hardIrNm] was empty, so topHatCost dropped its blocking term
+  // and refine() optimized passband flatness alone while startingDesign built an unscored blocker.
+  const target = { startNm: 3000, stopNm: 4000, outFraction: 0.001 };
+  assert.throws(() => startingDesign(target, { layers: 20 }), RangeError);
+  assert.throws(() => synthesizeStack(target, { layers: 20 }), RangeError);
+  assert.throws(() => refine([{ material: "Ta2O5", d_nm: 100 }], target), RangeError);
+  // exactly at the cutoff is still empty
+  assert.throws(() => synthesizeStack({ ...target, stopNm: HARD_IR_NM }, { layers: 20 }), RangeError);
+  // raising the cutoff makes the same target synthesizable
+  assert.ok(synthesizeStack(target, { layers: 20, hardIrNm: 5000 }).length === 20);
+});
+
 test("topHatCost honors a context-supplied IR cutoff (non-N-BK7 substrates / extended range)", () => {
   const target = { startNm: 950, stopNm: 1400, outFraction: 0 };
   const grid = Float64Array.from([4500]); // between the default 3400 cutoff and an extended 5000 range

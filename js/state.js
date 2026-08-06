@@ -19,6 +19,15 @@ export function defaultState() {
     includeStageEmission: true,
     // "Custom" coating: ideal top-hat OR a designed Ta2O5/SiO2 multilayer (TMM)
     custom: { startNm: 950, stopNm: 1450, outPct: 0.1, mode: "ideal", layers: [], synthLayers: 60 },
+    // "Custom 2": vendor-style Tavg bounds per band. Later rows win; uncovered λ transmit fully.
+    custom2: {
+      rows: [
+        { startNm: 950, stopNm: 1400, op: ">=", tPct: 90 },
+        { startNm: 1450, stopNm: 2350, op: "<=", tPct: 0.5 },
+        { startNm: 2350, stopNm: 2800, op: "<=", tPct: 0.1 },
+        { startNm: 2800, stopNm: 3400, op: "<=", tPct: 0.5 },
+      ],
+    },
   };
 }
 
@@ -51,6 +60,12 @@ export function validate(s) {
     const c = s.custom;
     if (!(c.startNm > 0 && c.stopNm > c.startNm)) errors.custom = "Custom passband: need stop > start > 0";
     else if (!(c.outPct >= 0 && c.outPct <= 100)) errors.custom = "Out-of-band T must be 0–100%";
+  }
+  if (s.stages.some((st) => st.coating === "Custom 2")) {
+    s.custom2.rows.forEach((r, i) => {
+      if (!(r.startNm > 0 && r.stopNm > r.startNm)) errors[`custom2_${i}`] = "Need λ stop > λ start > 0";
+      else if (!(r.tPct >= 0 && r.tPct <= 100)) errors[`custom2_${i}`] = "T must be 0–100%";
+    });
   }
   return { valid: Object.keys(errors).length === 0, errors };
 }

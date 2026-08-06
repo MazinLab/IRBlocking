@@ -12,6 +12,10 @@
 //   R_tot(λ,d) = R · (1 + (1−R)·τ)               total two-surface reflectance
 //   ε(λ,d)     = (1−R)·(1−τ) = 1 − T − R_tot     absorptance = graybody emissivity
 //
+// Each material carries a validity range (`rangeNm`) bounded by its UV and multiphonon IR
+// absorption edges. Outside it the substrate is treated as opaque (τ = 0, ε = 1 − R) rather than
+// holding the edge value — see MaterialElement._tau for why holding is actively wrong here.
+//
 // This is a SINGLE-PASS approximation: it omits multiple internal reflections, so it is not the
 // rigorous incoherent-slab result (T = (1−R)²τ/(1−R²τ²), etc.). The difference is O(R²τ²) ≈ 0.5% for
 // these low-index substrates — below the α-table / measured-curve data uncertainty — and the model is
@@ -160,14 +164,28 @@ export class MaterialElement {
     }
     return out;
   }
-  /** Internal (bulk) transmittance at this thickness, on the grid. */
+  /**
+   * Internal (bulk) transmittance at this thickness, on the grid.
+   *
+   * Outside the material's validity range (`rangeNm`) the substrate is OPAQUE (τ = 0), not the
+   * held edge value. Every substrate here is bounded by an absorption edge — the UV edge below and
+   * the multiphonon IR edge above — so τ falls monotonically past the data and never recovers.
+   * Holding the edge value instead turns a falling edge into an infinite plateau: the N-BK7 curve
+   * ends at T = 1.1e-4 (10 mm) at 4001 nm, which Beer–Lambert scales to τ = 0.38 for a 1 mm window,
+   * held out to arbitrary wavelength — right where the 300 K photon spectrum peaks. That single
+   * artifact carried 84% of the reported flux for a 1 mm uncoated window over 400–5000 nm.
+   */
   _tau(gridNm, R) {
     const bulk = this.material.bulk;
+    const [loNm, hiNm] = this.material.rangeNm;
     const out = new Float64Array(gridNm.length);
     if (bulk.kind === "alpha") {
       const a = interpAlpha(bulk.nm, bulk.alpha, gridNm);
       const d_cm = this.thickness_mm / MM_PER_CM;
-      for (let i = 0; i < out.length; i++) out[i] = Math.exp(-a[i] * d_cm);
+      for (let i = 0; i < out.length; i++) {
+        if (gridNm[i] < loNm || gridNm[i] > hiNm) continue; // opaque past the absorption edges
+        out[i] = Math.exp(-a[i] * d_cm);
+      }
     } else {
       // curve: divide measured external T by the Fresnel surface term to get τ at d0, then scale.
       const wl = this.measuredCurve.wavelength_nm;
@@ -175,6 +193,7 @@ export class MaterialElement {
       const Tmeas = interpolateHoldClamp(wl, t, gridNm);
       const exp = this.thickness_mm / bulk.d0_mm;
       for (let i = 0; i < out.length; i++) {
+        if (gridNm[i] < loNm || gridNm[i] > hiNm) continue; // opaque past the absorption edges
         const surf = (1 - R[i]) * (1 - R[i]);
         let tau0 = surf > 0 ? Tmeas[i] / surf : 0;
         if (tau0 < 0) tau0 = 0;

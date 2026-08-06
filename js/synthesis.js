@@ -26,6 +26,7 @@ const L = "SiO2"; // low index
  */
 export function startingDesign(target, opts = {}) {
   const hardIrNm = opts.hardIrNm ?? HARD_IR_NM;
+  assertBlockBand(target, hardIrNm);
   const N = opts.layers ?? 60;
   const blockLo = target.stopNm;
   const blockHi = Math.max(blockLo * 1.15, hardIrNm);
@@ -42,6 +43,22 @@ export function startingDesign(target, opts = {}) {
 // Beyond this wavelength the substrate glass (e.g. N-BK7/fused silica) absorbs, so the coating
 // need not block there — we only suppress long-wave leakage from the passband stop out to here.
 export const HARD_IR_NM = 3400;
+
+/**
+ * The synthesis objective only scores [stopNm, hardIrNm]. If the passband stop reaches the cutoff
+ * that band is empty, topHatCost silently drops its blocking term, and refine() would return a
+ * stack optimized for passband flatness alone whose blocking is accidental. Fail loudly instead.
+ *
+ * @throws {RangeError} when there is no long-wave band left to block.
+ */
+function assertBlockBand(target, hardIrNm) {
+  if (!(target.stopNm < hardIrNm)) {
+    throw new RangeError(
+      `Passband stop (${target.stopNm} nm) must be below the ${hardIrNm} nm substrate cutoff — ` +
+      "there is no long-wave band left for the coating to block.",
+    );
+  }
+}
 
 /**
  * Asymmetric cost for the top-hat target:
@@ -82,6 +99,7 @@ function stackCost(layers, grid, target, opts) {
 export function refine(layers, target, opts = {}) {
   const { points = 200, maxSweeps = 50, wIn = 4, wBlock = 1 } = opts;
   const hardIrNm = opts.hardIrNm ?? HARD_IR_NM;
+  assertBlockBand(target, hardIrNm);
   // Weight passband flatness above blocking depth so the optimizer does not ripple the passband to
   // over-block (the user prefers a flatter passband and more out-of-band transmission).
   const costOpts = { hardIrNm, wIn, wBlock };
